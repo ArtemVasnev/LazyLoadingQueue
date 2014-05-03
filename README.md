@@ -1,6 +1,6 @@
 LazyLoadingQueue
 ================
 
-WARNING! Work in progress! Could eat all your memory! ~80mb per operation
+WARNING! Work in progress! 
 
-Test project, do not install it on any device. Causes memory warning after creating an uiimage in background thread
+Test project, do not install it on any device. Causes memory warning while decompressing 4k image
