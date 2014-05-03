@@ -23,12 +23,12 @@
 		9F2C9AED1913AF2F0071BE04 /* LazyLoadingQueueTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9AEC1913AF2F0071BE04 /* LazyLoadingQueueTests.m */; };
 		9F2C9AFA1913C4780071BE04 /* KittenRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9AF91913C4780071BE04 /* KittenRecord.m */; };
 		9F2C9AFC1913DA8F0071BE04 /* Kittens.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9F2C9AFB1913DA8F0071BE04 /* Kittens.plist */; };
-		9F2C9AFF1913E1480071BE04 /* ImageLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9AFE1913E1480071BE04 /* ImageLoader.m */; };
 		9F2C9B021913E2FB0071BE04 /* LoadingAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9B011913E2FB0071BE04 /* LoadingAPI.m */; };
 		9F2C9B071913E75F0071BE04 /* no_photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 9F2C9B061913E75F0071BE04 /* no_photo.png */; };
 		9F2C9B0A1913E8B90071BE04 /* ImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9B091913E8B90071BE04 /* ImageCache.m */; };
 		9F2C9B0D1913F3D70071BE04 /* KittenCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9B0C1913F3D70071BE04 /* KittenCell.m */; };
 		9F2C9B101913F97E0071BE04 /* LoadingOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C9B0F1913F97E0071BE04 /* LoadingOperation.m */; };
+		9F9111EF1915417A007E35B8 /* UIImage+Decompression.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F9111EE1915417A007E35B8 /* UIImage+Decompression.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,8 +64,6 @@
 		9F2C9AF81913C4780071BE04 /* KittenRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KittenRecord.h; sourceTree = "<group>"; };
 		9F2C9AF91913C4780071BE04 /* KittenRecord.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KittenRecord.m; sourceTree = "<group>"; };
 		9F2C9AFB1913DA8F0071BE04 /* Kittens.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Kittens.plist; sourceTree = "<group>"; };
-		9F2C9AFD1913E1480071BE04 /* ImageLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLoader.h; sourceTree = "<group>"; };
-		9F2C9AFE1913E1480071BE04 /* ImageLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageLoader.m; sourceTree = "<group>"; };
 		9F2C9B001913E2FB0071BE04 /* LoadingAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoadingAPI.h; sourceTree = "<group>"; };
 		9F2C9B011913E2FB0071BE04 /* LoadingAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoadingAPI.m; sourceTree = "<group>"; };
 		9F2C9B061913E75F0071BE04 /* no_photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = no_photo.png; sourceTree = "<group>"; };
@@ -75,6 +73,8 @@
 		9F2C9B0C1913F3D70071BE04 /* KittenCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KittenCell.m; sourceTree = "<group>"; };
 		9F2C9B0E1913F97E0071BE04 /* LoadingOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoadingOperation.h; sourceTree = "<group>"; };
 		9F2C9B0F1913F97E0071BE04 /* LoadingOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoadingOperation.m; sourceTree = "<group>"; };
+		9F9111ED1915417A007E35B8 /* UIImage+Decompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Decompression.h"; sourceTree = "<group>"; };
+		9F9111EE1915417A007E35B8 /* UIImage+Decompression.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Decompression.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,13 +137,11 @@
 				9F2C9AD01913AF2F0071BE04 /* AppDelegate.h */,
 				9F2C9AD11913AF2F0071BE04 /* AppDelegate.m */,
 				9F2C9AD31913AF2F0071BE04 /* Main.storyboard */,
-				9F2C9AD61913AF2F0071BE04 /* ViewController.h */,
-				9F2C9AD71913AF2F0071BE04 /* ViewController.m */,
-				9F2C9AF81913C4780071BE04 /* KittenRecord.h */,
-				9F2C9AF91913C4780071BE04 /* KittenRecord.m */,
-				9F2C9B0B1913F3D70071BE04 /* KittenCell.h */,
-				9F2C9B0C1913F3D70071BE04 /* KittenCell.m */,
 				9F2C9B031913E3000071BE04 /* Loading API */,
+				9F9111F319154930007E35B8 /* Helpers */,
+				9F9111F119154920007E35B8 /* Model */,
+				9F9111F219154927007E35B8 /* View */,
+				9F9111F019154914007E35B8 /* Controller */,
 				9F2C9AFB1913DA8F0071BE04 /* Kittens.plist */,
 				9F2C9AD91913AF2F0071BE04 /* Images.xcassets */,
 				9F2C9B061913E75F0071BE04 /* no_photo.png */,
@@ -186,14 +184,48 @@
 			children = (
 				9F2C9B001913E2FB0071BE04 /* LoadingAPI.h */,
 				9F2C9B011913E2FB0071BE04 /* LoadingAPI.m */,
-				9F2C9AFD1913E1480071BE04 /* ImageLoader.h */,
-				9F2C9AFE1913E1480071BE04 /* ImageLoader.m */,
 				9F2C9B081913E8B90071BE04 /* ImageCache.h */,
 				9F2C9B091913E8B90071BE04 /* ImageCache.m */,
 				9F2C9B0E1913F97E0071BE04 /* LoadingOperation.h */,
 				9F2C9B0F1913F97E0071BE04 /* LoadingOperation.m */,
 			);
 			name = "Loading API";
+			sourceTree = "<group>";
+		};
+		9F9111F019154914007E35B8 /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				9F2C9AD61913AF2F0071BE04 /* ViewController.h */,
+				9F2C9AD71913AF2F0071BE04 /* ViewController.m */,
+			);
+			name = Controller;
+			sourceTree = "<group>";
+		};
+		9F9111F119154920007E35B8 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				9F2C9AF81913C4780071BE04 /* KittenRecord.h */,
+				9F2C9AF91913C4780071BE04 /* KittenRecord.m */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
+		9F9111F219154927007E35B8 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				9F2C9B0B1913F3D70071BE04 /* KittenCell.h */,
+				9F2C9B0C1913F3D70071BE04 /* KittenCell.m */,
+			);
+			name = View;
+			sourceTree = "<group>";
+		};
+		9F9111F319154930007E35B8 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				9F9111ED1915417A007E35B8 /* UIImage+Decompression.h */,
+				9F9111EE1915417A007E35B8 /* UIImage+Decompression.m */,
+			);
+			name = Helpers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -295,7 +327,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9F2C9AD81913AF2F0071BE04 /* ViewController.m in Sources */,
-				9F2C9AFF1913E1480071BE04 /* ImageLoader.m in Sources */,
+				9F9111EF1915417A007E35B8 /* UIImage+Decompression.m in Sources */,
 				9F2C9AD21913AF2F0071BE04 /* AppDelegate.m in Sources */,
 				9F2C9ACE1913AF2F0071BE04 /* main.m in Sources */,
 				9F2C9AFA1913C4780071BE04 /* KittenRecord.m in Sources */,
@@ -507,6 +539,7 @@
 				9F2C9AF21913AF300071BE04 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		9F2C9AF31913AF300071BE04 /* Build configuration list for PBXNativeTarget "LazyLoadingQueueTests" */ = {
 			isa = XCConfigurationList;
@@ -515,6 +548,7 @@
 				9F2C9AF51913AF300071BE04 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

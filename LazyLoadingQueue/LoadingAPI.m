@@ -7,7 +7,6 @@
 //
 
 #import "LoadingAPI.h"
-#import "ImageLoader.h"
 #import "ImageCache.h"
 #import "LoadingOperation.h"
 
@@ -27,6 +26,14 @@ static LoadingAPI *loadingAPI;
 
 @implementation LoadingAPI
 
+
+//- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+//    NSArray *arr = [change objectForKey:NSKeyValueChangeNewKey];
+//    NSLog(@"%li", [arr count]);
+//}
+
+#pragma mark - Public
+
 - (void)loadImage:(NSString *)name
               url:(NSURL *)url
         fromCache:(BOOL)fromCache
@@ -35,10 +42,10 @@ static LoadingAPI *loadingAPI;
           failure:(void (^)(NSError *))failure {
     
     
+    // Main queue. TODO Check cache in background. Dependency?
     if (fromCache) {
         UIImage *cached = [_imageCache cachedImageForName:name];
         if (cached) {
-            NSLog(@"Cached");
             dispatch_async(dispatch_get_main_queue(), ^{
                 success(cached);
             });
@@ -46,46 +53,37 @@ static LoadingAPI *loadingAPI;
         }
     }
     
-    LoadingOperation *operation = [[LoadingOperation alloc] initImageFromURL:url
-                                                                        name:name
-                                                                    progress:progress
-                                   success:^(UIImage *loadedImage) {
-                                       [_imageCache storeImage:loadedImage name:name memory:YES local:NO];
-                                       success(loadedImage);
-                                   } failure:failure];
+    LoadingOperation *operation =
+    [[LoadingOperation alloc] initImageFromURL:url name:name progress:progress  success:^(UIImage *loadedImage) {
+        [_imageCache storeImage:loadedImage name:name memory:YES local:NO];
+        success(loadedImage);
+    } failure:failure];
     
     __weak LoadingOperation *weakOperation = operation;
     [operation setCompletionBlock:^{
-        NSLog(@"%@ completed", name);
         if ([_activeOperations.allKeys containsObject:name]) {
             if (weakOperation.isFinished) {
-                [weakOperation cancel];
+//                NSLog(@"%@ completed", name);
                 [_activeOperations removeObjectForKey:name];
             }
         }
     }];
     
-    [_activeOperations setObject:operation forKey:name];
-    [_loadingQueue addOperation:operation];
+    dispatch_sync(_queue, ^{
+        [_activeOperations setObject:operation forKey:name];
+        [_loadingQueue addOperation:operation];
+    });
 }
 
 - (void)stopAllDownloads {
+    [_loadingQueue setSuspended:YES];
     NSLog(@"Cancel all operations");
-    
-    [_activeOperations.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop) {
-        LoadingOperation *operation = [_activeOperations objectForKey:key];
-        [operation performSelectorOnMainThread:@selector(cancel) withObject:nil waitUntilDone:NO];
-    }];
-    
-    [_suspendedOperations.allKeys enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop) {
-        LoadingOperation *operation = [_suspendedOperations objectForKey:key];
-        [operation performSelectorOnMainThread:@selector(cancel) withObject:nil waitUntilDone:NO];
-    }];
     
     [_activeOperations removeAllObjects];
     [_suspendedOperations removeAllObjects];
     
     [_loadingQueue cancelAllOperations];
+    [_loadingQueue setSuspended:NO];
 }
 
 - (void)pauseImageLoading:(NSString *)name {
@@ -93,7 +91,6 @@ static LoadingAPI *loadingAPI;
     dispatch_sync(_queue, ^{
         if ([_activeOperations.allKeys containsObject:name]) {
             LoadingOperation *operation = (LoadingOperation *)[_activeOperations objectForKey:name];
-            
             if (operation.isExecuting){
                 NSLog(@"Suspending %@", name);
                 [operation setQueuePriority:NSOperationQueuePriorityLow];
@@ -120,7 +117,7 @@ static LoadingAPI *loadingAPI;
         }
     });
     
-    //    NSLog(@"%@", (success) ? [NSString stringWithFormat:@"Resuming %@", name] : [NSString stringWithFormat:@"Load %@", name]);
+    NSLog(@"%@", (success) ? [NSString stringWithFormat:@"Resuming %@", name] : [NSString stringWithFormat:@"Loading %@", name]);
     return success;
 }
 
@@ -133,7 +130,7 @@ static LoadingAPI *loadingAPI;
     if (self) {
         _imageCache = [[ImageCache alloc] init];
         _loadingQueue = [[NSOperationQueue alloc] init];
-        [_loadingQueue setMaxConcurrentOperationCount:4];
+        [_loadingQueue setMaxConcurrentOperationCount:2];
         _activeOperations = [@{} mutableCopy];
         _suspendedOperations = [@{} mutableCopy];
         _queue = dispatch_queue_create("com.kittens.queue", NULL);
@@ -142,6 +139,11 @@ static LoadingAPI *loadingAPI;
         [fm createDirectoryAtPath:[NSString stringWithFormat:@"%@/Downloads", NSTemporaryDirectory()]
       withIntermediateDirectories:NO
                        attributes:nil error:nil];
+        
+        //        [_loadingQueue addObserver:self
+        //                        forKeyPath:@"operations"
+        //                           options:NSKeyValueObservingOptionNew
+        //                           context:nil];
     }
     return self;
 }

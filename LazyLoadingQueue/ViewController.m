@@ -24,7 +24,6 @@
 
 - (NSArray *)kittens {
     
-    
     KittenRecord *record;
     NSMutableArray *kittens = [@[] mutableCopy];
     NSString *path = [[NSBundle mainBundle] pathForResource:@"Kittens" ofType:@"plist"];
@@ -44,7 +43,7 @@
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     return [_kittens count];
-//    return 1;
+    //    return MIN([_kittens count], 1);
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -58,13 +57,12 @@
     
     if (![record kittenPic]) {
         if (![[LoadingAPI sharedLoadingAPI] resumeImageLoading:record.name]) {
-            cell.progressView.progress = 0.0f;
-
             [[LoadingAPI sharedLoadingAPI] loadImage:record.name url:record.picUrl fromCache:_fromCache progress:^(CGFloat progress) {
-                record.loadingProgress = progress;
                 KittenCell *actualCell = (KittenCell *)[collectionView cellForItemAtIndexPath:indexPath];
                 actualCell.progressView.hidden = NO;
-                actualCell.progressView.progress = progress;
+                // Decompression
+                record.loadingProgress = fminf(progress, 0.95f);
+                actualCell.progressView.progress = fminf(progress, 0.95f);
             } success:^(UIImage *loadedImage) {
                 
                 if (indexPath == nil)
@@ -72,18 +70,23 @@
                 
                 record.kittenPic = loadedImage;
                 record.loadingProgress = 1.0f;
+                
                 KittenCell *actualCell = (KittenCell *)[collectionView cellForItemAtIndexPath:indexPath];
-                actualCell.progressView.progress = 1.0;
-                actualCell.pictureImageView.image = loadedImage;
+                
+                [UIView animateWithDuration:0.3
+                                 animations:^{
+                                     actualCell.progressView.progress = 1.0;
+                                     actualCell.pictureImageView.image = loadedImage;
+                                 }];
+                
             } failure:^(NSError *error) {
                 if (indexPath == nil)
                     return;
                 
                 UIImage *image = [UIImage imageNamed:@"no_photo"];
-                record.kittenPic = image;
-                record.name = @"Loading error";
                 KittenCell *actualCell = (KittenCell *)[collectionView cellForItemAtIndexPath:indexPath];
                 actualCell.pictureImageView.image = image;
+                actualCell.titleLabel.text = @"Loading error";
             }];
         }
     }
@@ -108,7 +111,7 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
     _fromCache = self.cacheSwitch.isOn;
-    self.title = (_fromCache) ? @"From Cache" : @"From Web";
+    self.title = (_fromCache) ? @"From Cache" : @"Ignore Cache";
     _kittens = [self kittens];
     
 }
@@ -125,18 +128,18 @@
 
 - (IBAction)switchCacheMode:(id)sender {
     _fromCache = [self.cacheSwitch isOn];
-    self.title = (_fromCache) ? @"From Cache" : @"From Web";
+    self.title = (_fromCache) ? @"From Cache" : @"Ignore Cache";
 }
 
 - (IBAction)reloadKittens:(id)sender {
     [[LoadingAPI sharedLoadingAPI] stopAllDownloads];
     
     _kittens = nil;
-    [self.kittensCollectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+    [self.kittensCollectionView reloadData];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         _kittens = [self kittens];
-        [self.kittensCollectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
+        [self.kittensCollectionView reloadData];
     });
 }
 @end

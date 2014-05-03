@@ -7,15 +7,16 @@
 //
 
 #import "LoadingOperation.h"
+#import "UIImage+Decompression.h"
 
 typedef void (^ProgressBlock) (CGFloat);
 typedef void (^SuccessBlock) (UIImage *loadedImage);
-typedef void (^ErrorBlock) (NSError *);
+typedef void (^FailureBlock) (NSError *);
 
 @interface LoadingOperation () <NSURLConnectionDelegate, NSURLConnectionDataDelegate> {
     ProgressBlock progressBlock;
     SuccessBlock successBlock;
-    ErrorBlock errorBlock;
+    FailureBlock failureBlock;
     
     NSUInteger _expectedDataLenght;
     NSMutableData *_responseData;
@@ -33,7 +34,6 @@ typedef void (^ErrorBlock) (NSError *);
 @end
 
 @implementation LoadingOperation
-
 
 #pragma mark - Overrides
 
@@ -57,43 +57,13 @@ typedef void (^ErrorBlock) (NSError *);
         return;
     
     [self willChangeValueForKey:@"isFinished"];
-    _finished = NO;
-    [self didChangeValueForKey:@"isFinished"];
-    
     [self willChangeValueForKey:@"isExecuting"];
+    _finished = NO;
     _executing = YES;
+    [NSThread detachNewThreadSelector:@selector(main) toTarget:self withObject:nil];
+    
+    [self didChangeValueForKey:@"isFinished"];
     [self didChangeValueForKey:@"isExecuting"];
-    
-    NSLog(@"Start");
-    
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:_url
-                                                                cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
-                                                            timeoutInterval:0];
-    
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if ([fm fileExistsAtPath:_filePath]) {
-        _responseData = [[NSMutableData alloc] initWithContentsOfFile:_filePath];
-    } else {
-        _responseData = [[NSMutableData alloc] init];
-        
-        if (![fm createFileAtPath:_filePath contents:nil attributes:nil])
-        {
-            NSLog(@"cannot create file");
-        }
-    }
-    
-    if (_responseData.length > 0) {
-        NSString *requestRange = [NSString stringWithFormat:@"bytes=%lu-", _responseData.length];
-        [request setValue:requestRange forHTTPHeaderField:@"Range"];
-    }
-    
-    _connection = [[NSURLConnection alloc] initWithRequest:request
-                                                  delegate:self
-                                          startImmediately:NO];
-    [_connection scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
-    [_connection start];
-    // so that our connection events get processed even if a scrollview blocks the main run loop
-    CFRunLoopRun();
 }
 
 - (void)cancel {
@@ -104,16 +74,15 @@ typedef void (^ErrorBlock) (NSError *);
     _responseData = nil;
     
     [self willChangeValueForKey:@"isExecuting"];
-    _executing = NO;
-    [self didChangeValueForKey:@"isExecuting"];
-    
     [self willChangeValueForKey:@"isFinished"];
+    
+    _executing = NO;
     _finished = YES;
+    
+    [self didChangeValueForKey:@"isExecuting"];
     [self didChangeValueForKey:@"isFinished"];
     
-    NSLog(@"Cancel");
     [super cancel];
-    
 }
 
 - (void)suspend {
@@ -122,11 +91,35 @@ typedef void (^ErrorBlock) (NSError *);
     [self cancel];
 }
 
-#pragma mark - NSURLConnection
-
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    NSLog(@"%@ Fail: %@", _name, [error localizedDescription]);
+- (void)main {
+    @autoreleasepool {
+        
+        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:_url
+                                                                    cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+                                                                timeoutInterval:0];
+        
+        NSFileManager *fm = [NSFileManager defaultManager];
+        if ([fm fileExistsAtPath:_filePath])
+            _responseData = [[NSMutableData alloc] initWithContentsOfFile:_filePath];
+        
+        if (!_responseData)
+            _responseData = [[NSMutableData alloc] init];
+        
+        if (_responseData.length > 0) {
+            NSString *requestRange = [NSString stringWithFormat:@"bytes=%lu-", _responseData.length];
+            [request setValue:requestRange forHTTPHeaderField:@"Range"];
+        }
+        
+        _connection = [[NSURLConnection alloc] initWithRequest:request
+                                                      delegate:self
+                                              startImmediately:NO];
+        [_connection scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+        [_connection start];
+        CFRunLoopRun();
+    }
 }
+
+#pragma mark - NSURLConnection
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
     _expectedDataLenght = [response expectedContentLength];
@@ -134,34 +127,42 @@ typedef void (^ErrorBlock) (NSError *);
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
     [_responseData appendData:data];
+    CGFloat progress = (float)_responseData.length / (float) _expectedDataLenght;
     dispatch_async(dispatch_get_main_queue(), ^{
-        CGFloat progress = (float)_responseData.length / (float) _expectedDataLenght;
         progressBlock(progress);
     });
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
     
-    /*
-     CFDataRef imgData = (__bridge CFDataRef)_responseData;
-     CGDataProviderRef imgDataProvider = CGDataProviderCreateWithCFData (imgData);
-     CGImageRef image = CGImageCreateWithJPEGDataProvider(imgDataProvider, NULL, true, kCGRenderingIntentDefault);
-     CGDataProviderRelease(imgDataProvider);
-     */
-    //    [_responseData writeToFile:_filePath atomically:YES];
     UIImage *image = [[UIImage alloc] initWithData:_responseData];
     _responseData = nil;
+    UIImage *decompressedImage = [image decomplessedImage];
     
     [[NSFileManager defaultManager] removeItemAtPath:_filePath error:nil];
     
     dispatch_async(dispatch_get_main_queue(), ^{
-
-        successBlock(image);
+        
+        if (decompressedImage) {
+            successBlock(decompressedImage);
+        } else {
+            failureBlock(nil);
+        }
+        
         [self willChangeValueForKey:@"isFinished"];
         _finished = YES;
         [self didChangeValueForKey:@"isFinished"];
-        
-        [self cancel];
+    });
+}
+
+- (NSCachedURLResponse *)connection:(NSURLConnection *)connection willCacheResponse:(NSCachedURLResponse *)cachedResponse {
+    return nil;
+}
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    NSLog(@"%@ Fail: %@", _name, [error localizedDescription]);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        failureBlock(error);
     });
 }
 
@@ -179,18 +180,14 @@ typedef void (^ErrorBlock) (NSError *);
         
         progressBlock = progress;
         successBlock = success;
-        errorBlock = failure;
+        failureBlock = failure;
         
         _responseData = [[NSMutableData alloc] init];
         _name = [name copy];
         _url = url;
         _filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"Downloads/%@", name]];
-        
     }
     return self;
 }
-
-
-
 
 @end
